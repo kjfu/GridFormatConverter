@@ -1,1 +1,0 @@
-/usr/bin/c++     CMakeFiles/gfc.dir/src/grid_format_converter.cpp.o  -o bin/gfc 
