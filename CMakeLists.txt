@@ -1,0 +1,5 @@
+project(GridFormatConverter)
+cmake_minimum_required(VERSION 3.4)
+aux_source_directory(${CMAKE_SOURCE_DIR}/src DIR_SRCS)
+set(EXECUTABLE_OUTPUT_PATH ${CMAKE_BINARY_DIR}/bin)
+add_executable(gfc ${DIR_SRCS})

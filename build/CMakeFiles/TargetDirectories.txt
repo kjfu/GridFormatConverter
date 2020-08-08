@@ -1,0 +1,3 @@
+/home/kjfu/Public/GridFormatConverter/build/CMakeFiles/rebuild_cache.dir
+/home/kjfu/Public/GridFormatConverter/build/CMakeFiles/gfc.dir
+/home/kjfu/Public/GridFormatConverter/build/CMakeFiles/edit_cache.dir
