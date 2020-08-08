@@ -1,5 +1,6 @@
 project(GridFormatConverter)
 cmake_minimum_required(VERSION 3.4)
-aux_source_directory(${CMAKE_SOURCE_DIR}/src DIR_SRCS)
+#aux_source_directory(${CMAKE_SOURCE_DIR}/src DIR_SRCS)
 set(EXECUTABLE_OUTPUT_PATH ${CMAKE_BINARY_DIR}/bin)
-add_executable(gfc ${DIR_SRCS})
+add_executable(msh2dat ${CMAKE_SOURCE_DIR}/src/grid_format_converter.cpp)
+add_executable(gfc ${CMAKE_SOURCE_DIR}/src/main.cpp)
