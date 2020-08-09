@@ -2,7 +2,7 @@
 #include <fstream>
 #include <sstream>
 #include <iostream>
-
+#include <iomanip>
 void MMesh::read(std::string filePath, std::string fileFormat){
 
 	// std::string substr = filePath.substr(filePath.find_last_of(".")+1);
@@ -54,16 +54,22 @@ void MMesh::readSU2(std::string filePath){
 						container.back().index = container.size()-1;
 					};
 
-					if (iType == 10){
+					if (iType == VTK_TRIANGLE){
+						readCell(triangleCells_, 3);
+					}
+					else if (iType == VTK_QUAD){
+						readCell(quadrangleCells_, 4);
+					}
+					else if (iType == VTK_TETRA){
 						readCell(tetrahedronCells_, 4);
 					}
-					else if (iType == 12){
+					else if (iType == VTK_HEXAHEDRON){
 						readCell(hexahedronCells_, 8);
 					}
-					else if (iType == 13){
+					else if (iType == VTK_WEDGE){
 						readCell(prismCells_, 6);
 					}
-					else if (iType == 14){
+					else if (iType == VTK_PYRAMID){
 						readCell(pyramidCells_, 5);
 					}
 
@@ -79,7 +85,7 @@ void MMesh::readSU2(std::string filePath){
 					double coordinate;
 					vertices_.emplace_back();
 					for(int j=0; j<nDim; j++){
-						lStream >> coordinate;
+						lStream >> std::setprecision(15) >> coordinate;
 						vertices_.back().pt[j] = coordinate;
 						vertices_.back().index = i;
 					}
@@ -108,7 +114,7 @@ void MMesh::readSU2(std::string filePath){
 					std::stringstream lstream(line);
 					int type;
 					lstream >> type;
-					const auto writeBoundaryFacets = 
+					const auto readBoundaryFacets = 
 					[&lstream]
 					(auto &container, auto &bdContainer)
 					{				
@@ -123,14 +129,14 @@ void MMesh::readSU2(std::string filePath){
 						bdContainer.emplace_back(container.back().index);
 					};
 
-					if (type==3){
-						writeBoundaryFacets(lineFacets_, boundaries_.back().lineFacetIndices_);
+					if (type==VTK_LINE){
+						readBoundaryFacets(lineFacets_, boundaries_.back().lineFacetIndices_);
 					}
-					if (type == 5){
-						writeBoundaryFacets(triangleFacets_, boundaries_.back().triangleFacetIndices_);
+					if (type == VTK_TRIANGLE){
+						readBoundaryFacets(triangleFacets_, boundaries_.back().triangleFacetIndices_);
 					}
-					else if(type== 9){
-						writeBoundaryFacets(quadrangleFacets_, boundaries_.back().quadrangleFacetIndices_);
+					else if(type== VTK_QUAD){
+						readBoundaryFacets(quadrangleFacets_, boundaries_.back().quadrangleFacetIndices_);
 					}
 
 				}
@@ -151,8 +157,11 @@ void MMesh::write(std::string filePath, std::string fileFormat){
 	if (fileFormat=="vtk"
 		|| fileFormat=="VTK"){
 			writeVTK(filePath);
-		}
-
+	}
+	else if (fileFormat=="SU2"
+		|| fileFormat == "su2"){
+			writeSU2(filePath);
+	}
 }
 
 
@@ -174,7 +183,9 @@ void MMesh::writeVTK(std::string filePath){
 
 
 	
-	int sum = (4+1) * tetrahedronCells_.size()
+	int sum = (3+1) * triangleCells_.size()
+			+ (4+1) * quadrangleCells_.size()
+			+ (4+1) * tetrahedronCells_.size()
 			+ (6+1) * prismCells_.size()
 			+ (8+1) * hexahedronCells_.size()
 			+ (5+1) * pyramidCells_.size();
@@ -192,6 +203,8 @@ void MMesh::writeVTK(std::string filePath){
         		outFile << "\n";
     	}
 	};
+	writeCells(triangleCells_);
+	writeCells(quadrangleCells_);
 	writeCells(tetrahedronCells_);
 	writeCells(prismCells_);
 	writeCells(hexahedronCells_);
@@ -201,15 +214,89 @@ void MMesh::writeVTK(std::string filePath){
     outFile<< "CELL_TYPES " << numCells() <<"\n";
 	const auto writeCellTypes = 
 				[&outFile]
-				(auto &container, int type){
+				(auto &container, VTK_CELL_TYPE type){
 					for (int i=0; i<container.size(); i++){
 						outFile << type << "\n";
 					}
 				};
-	writeCellTypes(tetrahedronCells_, 10);
-	writeCellTypes(prismCells_, 13);
-	writeCellTypes(hexahedronCells_, 11);
-	writeCellTypes(pyramidCells_, 14);
+	writeCellTypes(triangleCells_, VTK_TRIANGLE);
+	writeCellTypes(quadrangleCells_,VTK_QUAD);
+	writeCellTypes(tetrahedronCells_, VTK_TETRA);
+	writeCellTypes(prismCells_, VTK_WEDGE);
+	writeCellTypes(hexahedronCells_, VTK_HEXAHEDRON);
+	writeCellTypes(pyramidCells_, VTK_PYRAMID);
 
 	outFile.close();
+}
+
+
+void MMesh::writeSU2(std::string filePath){
+	std::ofstream outFile(filePath);
+	outFile << "NDIME= " << nDim <<"\n";
+	outFile << "NELEM= " << this->numCells()<<"\n";
+	
+	/* write elements*/
+	int index = 0;
+	const auto writeElement =
+	[&outFile, &index]
+	(auto &container, VTK_CELL_TYPE type)
+	{
+
+		for(auto &cell:container){		
+			outFile << type;
+			for (auto &p: cell.form){
+				outFile << "	"<< p ;
+			}		
+			outFile << "	" << index <<"\n";
+			++index;
+		}
+
+	};
+
+	if (nDim==2){
+		writeElement(triangleCells_, VTK_TRIANGLE);
+		writeElement(quadrangleCells_, VTK_QUAD);
+	}
+	else if (nDim==3){
+		writeElement(prismCells_, VTK_WEDGE);
+		writeElement(hexahedronCells_, VTK_HEXAHEDRON);
+		writeElement(tetrahedronCells_, VTK_TETRA);
+		writeElement(pyramidCells_, VTK_PYRAMID);
+	}
+
+	/* write point*/
+	outFile << "NPOIN= "<< vertices_.size() << "\n";
+	index=0;
+	for(auto v: vertices_){
+		for(int i=0; i<nDim; i++){
+			outFile << std::setprecision(15) << v.pt[i] << " ";
+		}
+		outFile << index <<"\n";
+		++index;
+	}
+
+	outFile << "NMARK= "<< boundaries_.size() << "\n";
+
+	for(auto &bd:boundaries_){
+		outFile << "MARKER_TAG= " << bd.name << "\n";
+		outFile << "MARKER_ELEMS= " << bd.lineFacetIndices_.size() + bd.triangleFacetIndices_.size() + bd.quadrangleFacetIndices_.size() << "\n";
+		const auto &writeBoundry = 
+		[&outFile]
+		(auto &container, auto &fcontainer, VTK_CELL_TYPE type){
+			for (int i=0; i<container.size(); i++){
+				outFile<< type;
+				for(auto &p: fcontainer[container[i]].form){
+					outFile << " " << p;
+				}			
+				outFile << "\n";
+			}
+
+		};
+
+		writeBoundry(bd.lineFacetIndices_, lineFacets_,VTK_LINE);
+		writeBoundry(bd.quadrangleFacetIndices_, quadrangleFacets_, VTK_QUAD);
+		writeBoundry(bd.triangleFacetIndices_, quadrangleFacets_, VTK_TRIANGLE); 
+	}
+
+
 }
