@@ -3,14 +3,26 @@
 #include <sstream>
 #include <iostream>
 #include <iomanip>
+#include <unordered_map>
+
+
 void MMesh::read(std::string filePath, std::string fileFormat){
 
 	// std::string substr = filePath.substr(filePath.find_last_of(".")+1);
 
-	if (fileFormat == "su2"){
+
+	if (fileFormat == "su2" || fileFormat == "SU2"){
 		readSU2(filePath);
 	}
-
+	else if (fileFormat == "mesh" || fileFormat=="MESH"){
+		readMESH(filePath);
+	}
+	else
+	{
+		exit(1);	
+	}
+	
+	
 }
 
 
@@ -115,11 +127,12 @@ void MMesh::readSU2(std::string filePath){
 					int type;
 					lstream >> type;
 					const auto readBoundaryFacets = 
-					[&lstream]
+					[&lstream, this]
 					(auto &container, auto &bdContainer)
 					{				
 						container.emplace_back();
-						container.back().index= container.size()-1;	
+						container.back().index= container.size()-1;
+						container.back().boundaryIndex = boundaries_.size() - 1;	
 						for(int j=0; j<container.back().nForms; j++){
 							int iVertex;
 							lstream >> iVertex;
@@ -149,8 +162,85 @@ void MMesh::readSU2(std::string filePath){
 	
 }
 
+void MMesh::readMESH(std::string filePath){
 
 
+	std::ifstream inFile(filePath);
+	if (inFile.is_open()){
+		while(inFile){
+			std::string line;
+			std::string keystring;
+			std::getline(inFile, line);
+			std::stringstream lineStream(line);
+			lineStream >> keystring;
+
+			const auto readCells =
+			[&inFile, this]
+			(auto &container){
+				std::string line;
+				std::getline(inFile, line);
+				std::stringstream lineStream(line);
+				int nCells;
+				lineStream >> nCells;
+				for (int i=0; i<nCells; i++){
+					std::getline(inFile, line);
+					lineStream.str(line);
+					container.emplace_back();
+					for(int j=0; j<container.back().nForms; j++){
+						lineStream >> container.back().form[j];
+					}
+				}
+			};
+
+			// TODO
+			const auto readBoundadryFacets = 
+			[&inFile, this]
+			(auto &container){
+
+			};
+
+			if (keystring == "Dimension"){
+				lineStream >> nDim;
+			}
+			else if (keystring == "Vertices"){
+				std::getline(inFile, line);
+				lineStream.str(line);
+				int nVertices;
+				lineStream >> nVertices;
+				for (int i=0; i<nVertices; i++){
+					std::getline(inFile, line);
+					lineStream.str(line);
+					vertices_.emplace_back();						
+					lineStream >> vertices_.back().pt[0] >> vertices_.back().pt[1];
+					if (nDim==2){
+						vertices_.back().pt[2] = 0;
+					}
+					else if (nDim==3){
+						lineStream >> vertices_.back().pt[2];
+					}
+
+					vertices_.back().index = vertices_.size() - 1;
+
+				}
+			}
+			else if (keystring == "Triangles"){
+				
+				if (nDim == 2){
+					readCells(triangleCells_);
+				}
+				else{
+
+				}
+			}
+			else if (keystring == "Tetrahedra")
+			{
+				readCells(tetrahedronCells_);
+			}
+			
+
+		}
+	}	
+}
 
 void MMesh::write(std::string filePath, std::string fileFormat){
 	
@@ -161,6 +251,13 @@ void MMesh::write(std::string filePath, std::string fileFormat){
 	else if (fileFormat=="SU2"
 		|| fileFormat == "su2"){
 			writeSU2(filePath);
+	}
+	else if (fileFormat=="mesh"
+		|| fileFormat == "MESH"){
+			writeMESH(filePath);
+	}
+	else{
+		exit(1);
 	}
 }
 
@@ -297,6 +394,66 @@ void MMesh::writeSU2(std::string filePath){
 		writeBoundry(bd.quadrangleFacetIndices_, quadrangleFacets_, VTK_QUAD);
 		writeBoundry(bd.triangleFacetIndices_, quadrangleFacets_, VTK_TRIANGLE); 
 	}
+}
 
 
+
+void MMesh::writeMESH(std::string filePath){
+	std::ofstream outFile(filePath);
+
+	outFile << "MeshVersionFormatted 2\n\n\n";
+	outFile << "Dimension " << nDim << "\n\n\n";
+	
+	
+	outFile << "Vertices\n" << vertices_.size()<<"\n";
+	for (auto &v: vertices_){
+		for(int i=0; i<nDim; ++i){
+			outFile << v.pt[i] << "	";
+		}
+		outFile << "1\n";
+	}
+
+	const auto &writeElement = 
+	[&outFile]
+	(auto &container, std::string typeName){
+		if (container.empty()){
+			return ;	
+		}
+
+		outFile << typeName.c_str() << "\n" << container.size()<<"\n";
+		for (auto &v: container){
+			for(auto &f: v.form){
+				outFile << f << "	";
+			}
+			outFile << "1\n";
+		}
+	};
+	writeElement(triangleCells_, "Triangles");
+	writeElement(quadrangleCells_, "Quadrilaterals");
+	writeElement(tetrahedronCells_, "Tetrahedra");
+	writeElement(hexahedronCells_, "Hexaedra");
+
+	const auto &writeBoundary = 
+	[&outFile]
+	(auto &container, std::string typeName){
+		
+		if (container.empty()){
+			return;	
+		}
+
+		outFile << typeName.c_str() << "\n" << container.size()<<"\n";
+		
+		for (auto &v: container){
+			for(auto &f: v.form){
+				outFile << f << "	";
+			}
+			outFile << v.boundaryIndex << "\n";
+		}
+	};
+
+	writeBoundary(lineFacets_, "Edges");
+	writeBoundary(triangleFacets_, "Triangles");
+	writeBoundary(quadrangleFacets_, "Quadrilaterals");
+
+	outFile.close();
 }
