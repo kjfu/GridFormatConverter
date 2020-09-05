@@ -1,0 +1,17 @@
+[
+{
+  "directory": "/home/kjfu/Public/GridFormatConverter/build",
+  "command": "/usr/bin/x86_64-linux-gnu-g++-7    -g   -o CMakeFiles/msh2dat.dir/src/grid_format_converter.cpp.o -c /home/kjfu/Public/GridFormatConverter/src/grid_format_converter.cpp",
+  "file": "/home/kjfu/Public/GridFormatConverter/src/grid_format_converter.cpp"
+},
+{
+  "directory": "/home/kjfu/Public/GridFormatConverter/build",
+  "command": "/usr/bin/x86_64-linux-gnu-g++-7    -g   -o CMakeFiles/gfc.dir/src/main.cpp.o -c /home/kjfu/Public/GridFormatConverter/src/main.cpp",
+  "file": "/home/kjfu/Public/GridFormatConverter/src/main.cpp"
+},
+{
+  "directory": "/home/kjfu/Public/GridFormatConverter/build",
+  "command": "/usr/bin/x86_64-linux-gnu-g++-7    -g   -o CMakeFiles/gfc.dir/src/mesh.cpp.o -c /home/kjfu/Public/GridFormatConverter/src/mesh.cpp",
+  "file": "/home/kjfu/Public/GridFormatConverter/src/mesh.cpp"
+}
+]

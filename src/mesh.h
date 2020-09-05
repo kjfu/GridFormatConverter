@@ -37,6 +37,7 @@ struct MFacet{
 	int form[t_nForms];
 	int index;
 	int parent;
+	int boundaryIndex;
 	static constexpr int nForms = t_nForms;
 };
 
@@ -83,9 +84,13 @@ private:
 
 
 void readSU2(std::string filePath);
+void readMESH(std::string filePath);
+void readWRL(std::string filePath);
 
 void writeVTK(std::string filePath);
 void writeSU2(std::string filePath);
+void writeMESH(std::string filePath);
+
 
 int numCells() const{
 	return static_cast<int>(triangleCells_.size()

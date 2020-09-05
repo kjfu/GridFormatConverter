@@ -17,6 +17,9 @@ void MMesh::read(std::string filePath, std::string fileFormat){
 	else if (fileFormat == "mesh" || fileFormat=="MESH"){
 		readMESH(filePath);
 	}
+	else if (fileFormat == "wrl" || fileFormat=="WRL"){
+		readWRL(filePath);
+	}
 	else
 	{
 		exit(1);	
@@ -184,6 +187,7 @@ void MMesh::readMESH(std::string filePath){
 				lineStream >> nCells;
 				for (int i=0; i<nCells; i++){
 					std::getline(inFile, line);
+					lineStream.clear();
 					lineStream.str(line);
 					container.emplace_back();
 					for(int j=0; j<container.back().nForms; j++){
@@ -204,11 +208,13 @@ void MMesh::readMESH(std::string filePath){
 			}
 			else if (keystring == "Vertices"){
 				std::getline(inFile, line);
+				lineStream.clear();
 				lineStream.str(line);
 				int nVertices;
 				lineStream >> nVertices;
 				for (int i=0; i<nVertices; i++){
 					std::getline(inFile, line);
+					lineStream.clear();
 					lineStream.str(line);
 					vertices_.emplace_back();						
 					lineStream >> vertices_.back().pt[0] >> vertices_.back().pt[1];
@@ -241,6 +247,64 @@ void MMesh::readMESH(std::string filePath){
 		}
 	}	
 }
+
+void MMesh::readWRL(std::string filePath){
+	std::ifstream inFile(filePath);
+	if (inFile.is_open()){
+		while (inFile){
+			std::string line;
+			std::string keystring;
+			std::getline(inFile, line);
+			std::stringstream lineStream(line);
+			lineStream >> keystring;
+			if (keystring == "point"){
+				std::getline(inFile, line);
+				while(line.find(",") != std::string::npos){
+					lineStream.clear();
+					lineStream.str(line);
+					vertices_.emplace_back();
+					lineStream >> vertices_.back().pt[0] >> vertices_.back().pt[1] >> vertices_.back().pt[2]; 
+					
+					std::getline(inFile, line);
+				}
+				
+			}
+			else if (keystring == "coordIndex"){
+				std::getline(inFile, line);
+				while(line.find(",") != std::string::npos){
+					lineStream.clear();
+					lineStream.str(line);
+
+					quadrangleCells_.emplace_back();
+
+					auto getNum = 
+					[&lineStream]
+					( ){
+						std::string token;
+						lineStream >> token;
+						token.substr(0, token.find(","));
+						return std::stoi(token.c_str());
+					};
+					
+					
+					quadrangleCells_.back().form[0] = getNum();
+					quadrangleCells_.back().form[1] = getNum();
+					quadrangleCells_.back().form[2] = getNum();
+					quadrangleCells_.back().form[3] = getNum();
+
+					
+					std::getline(inFile, line);
+				}
+			}
+			
+		}
+		
+	}
+
+
+}
+
+
 
 void MMesh::write(std::string filePath, std::string fileFormat){
 	

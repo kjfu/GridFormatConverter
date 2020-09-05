@@ -1,0 +1,22 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/home/kjfu/Public/GridFormatConverter/src/grid_format_converter.cpp
+string
+-
+sstream
+-
+fstream
+-
+iostream
+-
+vector
+-
+map
+-
+

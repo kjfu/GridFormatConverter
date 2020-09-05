@@ -54,8 +54,18 @@ public:
 	int nodeIndices[4];
 };
 
-int
-main(int argc, char *argv[])
+
+
+void readMSH();
+void readSU2();
+
+void msh2dat(std::string inFileName, std::string outFileName);
+void su22vtk();
+
+
+
+
+int main(int argc, char *argv[])
 {
 
 	std::string inFileName;
@@ -73,6 +83,13 @@ main(int argc, char *argv[])
 		}
 	}
 
+	msh2dat(inFileName, outFileName);
+	return 0;
+}
+
+
+
+void msh2dat(std::string inFileName, std::string outFileName){
 	std::ifstream inFile(inFileName);
 	std::ofstream outFile(outFileName);
 
@@ -220,6 +237,4 @@ main(int argc, char *argv[])
 
 	inFile.close();
 	outFile.close();
-
-	return 0;
 }

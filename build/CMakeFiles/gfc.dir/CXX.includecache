@@ -1,0 +1,34 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/home/kjfu/Public/GridFormatConverter/src/main.cpp
+fstream
+-
+mesh.h
+/home/kjfu/Public/GridFormatConverter/src/mesh.h
+
+/home/kjfu/Public/GridFormatConverter/src/mesh.cpp
+mesh.h
+/home/kjfu/Public/GridFormatConverter/src/mesh.h
+fstream
+-
+sstream
+-
+iostream
+-
+iomanip
+-
+unordered_map
+-
+
+/home/kjfu/Public/GridFormatConverter/src/mesh.h
+string
+-
+vector
+-
+
